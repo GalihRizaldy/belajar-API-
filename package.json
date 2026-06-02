@@ -1,0 +1,14 @@
+{
+  "name": "belajar-api",
+  "version": "1.0.0",
+  "description": "Proyek API dengan fitur Upload, FFmpeg HLS, dan UI Modern",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js",
+    "dev": "node server/server.js",
+    "postinstall": "cd server && npm install"
+  },
+  "keywords": [],
+  "author": "Galih Rizaldy",
+  "license": "ISC"
+}
