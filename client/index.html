@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mesin Pemberi Pesan Semangat</title>
+    <style>
+        /* Desain UI sederhana dan modern */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+        #result-area {
+            margin-top: 25px;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #ecf0f1;
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .pesan {
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #27ae60;
+        }
+        .waktu {
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+        .error {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        /* Style untuk Panel Admin */
+        .admin-panel {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #bdc3c7;
+        }
+        .admin-panel h2 {
+            font-size: 18px;
+            color: #34495e;
+            margin-bottom: 15px;
+        }
+        .admin-panel input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #bdc3c7;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        .admin-panel button {
+            background-color: #2ecc71;
+            width: 100%;
+        }
+        .admin-panel button:hover {
+            background-color: #27ae60;
+        }
+        #update-status {
+            font-size: 14px;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        .success { color: #27ae60; }
+        
+        /* Animasi Loading */
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Mesin Pemberi Pesan Semangat</h1>
+        <div style="display: flex; gap: 10px; justify-content: center;">
+            <button id="fetch-btn">Minta Pesan</button>
+            <button id="fetch-img-btn" style="background-color: #9b59b6;">Minta Gambar</button>
+            <button id="fetch-vid-btn" style="background-color: #e67e22;">Minta Video</button>
+        </div>
+        <div id="result-area">
+            <p>Belum ada pesan, gambar, atau video.</p>
+        </div>
+        <img id="result-img" src="" alt="Gambar dari Server" style="display: none; max-width: 100%; border-radius: 8px; margin-top: 15px;">
+        <video id="result-vid" controls style="display: none; max-width: 100%; border-radius: 8px; margin-top: 15px;"></video>
+        <!-- Panel Admin untuk mengubah pesan -->
+        <div class="admin-panel">
+            <h2>Panel Admin</h2>
+            <input type="text" id="input-pesan" placeholder="Masukkan pesan baru...">
+            <button id="update-btn">Update Pesan</button>
+            <hr style="border: 0; border-top: 1px solid #bdc3c7; margin: 15px 0;">
+            <input type="file" id="input-gambar" accept="image/*">
+            <button id="upload-btn" style="background-color: #8e44ad; margin-bottom: 15px;">Upload Gambar</button>
+            <hr style="border: 0; border-top: 1px solid #bdc3c7; margin: 15px 0;">
+            <input type="file" id="input-video" accept="video/mp4,video/webm,video/ogg">
+            <button id="upload-vid-btn" style="background-color: #d35400;">Upload Video</button>
+            <div id="update-status"></div>
+        </div>
+    </div>
+
+    <!-- Library HLS.js -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script>
+        // Mendapatkan referensi elemen-elemen DOM
+        const btn = document.getElementById('fetch-btn');
+        const resultArea = document.getElementById('result-area');
+
+        // Menambahkan event listener pada tombol saat diklik
+        btn.addEventListener('click', () => {
+            // Mengubah state menjadi loading
+            btn.disabled = true;
+            btn.innerText = "Mengambil data...";
+            resultArea.innerHTML = "<p>Mengambil data...</p>";
+
+            // Mengambil data dari API server menggunakan Web Fetch API
+            fetch('http://localhost:3000/api/pesan')
+                .then(response => {
+                    // Cek apakah response berhasil (status 200-299)
+                    if (!response.ok) {
+                        throw new Error('Gagal mengambil data dari server');
+                    }
+                    return response.json(); // Mengubah response text menjadi objek JSON
+                })
+                .then(data => {
+                    // Menampilkan data (pesan dan waktu) ke dalam div resultArea
+                    resultArea.innerHTML = `
+                        <div class="pesan">"${data.pesan}"</div>
+                        <div class="waktu">Waktu server: ${data.waktu}</div>
+                    `;
+                })
+                .catch(error => {
+                    // Menampilkan pesan error jika server mati atau ada kesalahan jaringan
+                    console.error('Error fetching data:', error);
+                    resultArea.innerHTML = `
+                        <p class="error">Gagal menghubungi server. Pastikan server sudah dijalankan di port 3000.</p>
+                    `;
+                })
+                .finally(() => {
+                    // Mengembalikan kondisi tombol seperti semula
+                    btn.disabled = false;
+                    btn.innerText = "Minta Pesan dari Server";
+                });
+        });
+
+        // --- Logika Minta Gambar ---
+        const fetchImgBtn = document.getElementById('fetch-img-btn');
+        const resultImg = document.getElementById('result-img');
+
+        fetchImgBtn.addEventListener('click', () => {
+            fetchImgBtn.disabled = true;
+            fetchImgBtn.innerText = "Mengambil...";
+
+            fetch('http://localhost:3000/api/gambar')
+                .then(response => {
+                    if (!response.ok) throw new Error('Gambar belum tersedia atau gagal dimuat');
+                    return response.json();
+                })
+                .then(data => {
+                    resultImg.src = data.url;
+                    resultImg.style.display = "block"; // Tampilkan gambar
+                })
+                .catch(error => {
+                    console.error('Error fetching image:', error);
+                    resultArea.innerHTML = `<p class="error">${error.message}</p>`;
+                    resultImg.style.display = "none";
+                })
+                .finally(() => {
+                    fetchImgBtn.disabled = false;
+                    fetchImgBtn.innerText = "Minta Gambar";
+                });
+        });
+
+        // --- Logika Minta Video ---
+        const fetchVidBtn = document.getElementById('fetch-vid-btn');
+        const resultVid = document.getElementById('result-vid');
+
+        fetchVidBtn.addEventListener('click', () => {
+            fetchVidBtn.disabled = true;
+            fetchVidBtn.innerText = "Mengambil...";
+
+            fetch('http://localhost:3000/api/video')
+                .then(response => {
+                    if (!response.ok) throw new Error('Video belum tersedia atau gagal dimuat');
+                    return response.json();
+                })
+                .then(data => {
+                    const videoSrc = data.url;
+                    resultVid.style.display = "block"; // Tampilkan video
+
+                    // Jika URL berakhiran .m3u8 dan browser mendukung HLS.js
+                    if (Hls.isSupported() && videoSrc.endsWith('.m3u8')) {
+                        const hls = new Hls();
+                        hls.loadSource(videoSrc);
+                        hls.attachMedia(resultVid);
+                        hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                            console.log('HLS.js siap memutar video');
+                        });
+                    } 
+                    // Fallback: Jika browser (misal Safari) mendukung HLS secara native
+                    else if (resultVid.canPlayType('application/vnd.apple.mpegurl')) {
+                        resultVid.src = videoSrc;
+                    } 
+                    // Fallback biasa untuk MP4
+                    else {
+                        resultVid.src = videoSrc;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching video:', error);
+                    resultArea.innerHTML = `<p class="error">${error.message}</p>`;
+                    resultVid.style.display = "none";
+                })
+                .finally(() => {
+                    fetchVidBtn.disabled = false;
+                    fetchVidBtn.innerText = "Minta Video";
+                });
+        });
+
+        // --- Logika Panel Admin ---
+        const updateBtn = document.getElementById('update-btn');
+        const inputPesan = document.getElementById('input-pesan');
+        const updateStatus = document.getElementById('update-status');
+
+        updateBtn.addEventListener('click', () => {
+            const pesanBaru = inputPesan.value.trim();
+            
+            if (!pesanBaru) {
+                updateStatus.innerHTML = '<span class="error">Pesan tidak boleh kosong!</span>';
+                return;
+            }
+
+            updateBtn.disabled = true;
+            updateBtn.innerText = "Menyimpan...";
+            updateStatus.innerHTML = "";
+
+            // Mengirim data JSON via POST request
+            fetch('http://localhost:3000/api/pesan', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ pesan: pesanBaru })
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Gagal mengupdate pesan');
+                return response.json();
+            })
+            .then(data => {
+                updateStatus.innerHTML = `<span class="success">${data.message}</span>`;
+                inputPesan.value = ""; // Kosongkan input
+            })
+            .catch(error => {
+                console.error('Error updating data:', error);
+                updateStatus.innerHTML = '<span class="error">Gagal menghubungi server.</span>';
+            })
+            .finally(() => {
+                updateBtn.disabled = false;
+                updateBtn.innerText = "Update Pesan";
+            });
+        });
+
+        // --- Logika Upload Gambar ---
+        const uploadBtn = document.getElementById('upload-btn');
+        const inputGambar = document.getElementById('input-gambar');
+
+        uploadBtn.addEventListener('click', () => {
+            const file = inputGambar.files[0];
+            if (!file) {
+                updateStatus.innerHTML = '<span class="error">Pilih file gambar terlebih dahulu!</span>';
+                return;
+            }
+
+            uploadBtn.disabled = true;
+            uploadBtn.innerText = "Mengupload...";
+            updateStatus.innerHTML = "";
+
+            // Menggunakan FormData untuk mengirim file
+            const formData = new FormData();
+            formData.append('gambar', file);
+
+            fetch('http://localhost:3000/api/upload', {
+                method: 'POST',
+                // Catatan: Jangan set header Content-Type secara manual saat menggunakan FormData
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Gagal mengupload gambar');
+                return response.json();
+            })
+            .then(data => {
+                updateStatus.innerHTML = `<span class="success">${data.message}</span>`;
+                inputGambar.value = ""; // Reset input file
+            })
+            .catch(error => {
+                console.error('Error uploading:', error);
+                updateStatus.innerHTML = '<span class="error">Gagal menghubungi server saat upload.</span>';
+            })
+            .finally(() => {
+                uploadBtn.disabled = false;
+                uploadBtn.innerText = "Upload Gambar";
+            });
+        });
+
+        // --- Logika Upload Video ---
+        const uploadVidBtn = document.getElementById('upload-vid-btn');
+        const inputVideo = document.getElementById('input-video');
+
+        uploadVidBtn.addEventListener('click', () => {
+            const file = inputVideo.files[0];
+            if (!file) {
+                updateStatus.innerHTML = '<span class="error">Pilih file video terlebih dahulu!</span>';
+                return;
+            }
+
+            uploadVidBtn.disabled = true;
+            uploadVidBtn.innerText = "Mengupload...";
+            updateStatus.innerHTML = '<div class="loader"></div><span style="vertical-align: middle;">Mengirim video ke server...</span>';
+
+            const formData = new FormData();
+            formData.append('video', file);
+
+            fetch('http://localhost:3000/api/upload-video', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok && response.status !== 202) throw new Error('Gagal mengupload video');
+                return response.json();
+            })
+            .then(data => {
+                updateStatus.innerHTML = `<div class="loader"></div><span style="vertical-align: middle; color: #27ae60;">${data.message}</span>`;
+                inputVideo.value = ""; // Reset input file
+                
+                // Mulai proses POLLING (mengecek status tiap 2 detik)
+                let checkCount = 0;
+                uploadVidBtn.innerText = "Memproses di Server...";
+                
+                const pollInterval = setInterval(() => {
+                    checkCount++;
+                    updateStatus.innerHTML = `<div class="loader"></div><span style="vertical-align: middle; color: #27ae60;">Memantau FFmpeg di server... (Cek ke-${checkCount})</span>`;
+                    
+                    fetch('http://localhost:3000/api/video-status')
+                        .then(res => res.json())
+                        .then(statusData => {
+                            if (statusData.status === 'ready') {
+                                clearInterval(pollInterval);
+                                updateStatus.innerHTML = `<span class="success">Selesai! Video siap diputar.</span>`;
+                                uploadVidBtn.disabled = false;
+                                uploadVidBtn.innerText = "Upload Video";
+                            } else if (statusData.status === 'error') {
+                                clearInterval(pollInterval);
+                                updateStatus.innerHTML = `<span class="error">Gagal mengkonversi video di server.</span>`;
+                                uploadVidBtn.disabled = false;
+                                uploadVidBtn.innerText = "Upload Video";
+                            }
+                            // Jika 'processing', biarkan loop berlanjut
+                        })
+                        .catch(err => {
+                            console.error('Gagal mengecek status', err);
+                        });
+                }, 2000); // Eksekusi tiap 2000ms (2 detik)
+            })
+            .catch(error => {
+                console.error('Error uploading video:', error);
+                updateStatus.innerHTML = '<span class="error">Gagal menghubungi server saat upload.</span>';
+                uploadVidBtn.disabled = false;
+                uploadVidBtn.innerText = "Upload Video";
+            });
+        });
+    </script>
+</body>
+</html>

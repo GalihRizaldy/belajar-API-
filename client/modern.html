@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mesin Pesan Semangat - Modern Glass</title>
+    <!-- Import Font Modern -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* CSS Reset & Variabel */
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.4);
+            --glass-shadow: 0 8px 32px rgba(31, 38, 135, 0.1);
+            --text-primary: #1c1c1e;
+            --text-secondary: #8e8e93;
+            --ios-blue: #007aff;
+            --ios-purple: #5856d6;
+            --ios-orange: #ff9500;
+            --ios-green: #34c759;
+            --ios-red: #ff3b30;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            /* Latar belakang cerah pastel bergerak ala iOS */
+            background: linear-gradient(-45deg, #f0f4ff, #ffeef6, #eafff5, #f4e8ff);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: var(--text-primary);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Glassmorphism Container Utama */
+        .glass-container {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: var(--glass-shadow);
+            padding: 40px;
+            text-align: center;
+            max-width: 450px;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        h1 {
+            font-size: 26px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            letter-spacing: -0.5px;
+        }
+
+        /* Kontainer Tombol Utama */
+        .action-group {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-bottom: 25px;
+        }
+
+        /* Estetika Tombol */
+        button {
+            background-color: var(--ios-blue);
+            color: white;
+            border: none;
+            padding: 12px 18px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+            min-width: 130px; /* Mencegah tombol bergetar/melebar */
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 122, 255, 0.4);
+            filter: brightness(1.1);
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        button:disabled {
+            background-color: #d1d1d6;
+            box-shadow: none;
+            cursor: not-allowed;
+            color: #8e8e93;
+        }
+
+        .btn-img { background-color: var(--ios-purple); box-shadow: 0 4px 12px rgba(88, 86, 214, 0.3); }
+        .btn-vid { background-color: var(--ios-orange); box-shadow: 0 4px 12px rgba(255, 149, 0, 0.3); }
+
+        /* Area Hasil */
+        #result-area {
+            margin-top: 10px;
+            padding: 20px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            min-height: 90px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .pesan {
+            font-weight: 600;
+            font-size: 18px;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        .waktu {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .error {
+            color: var(--ios-red);
+            font-weight: 600;
+        }
+
+        /* Panel Admin Glassmorphism */
+        .admin-panel {
+            margin-top: 35px;
+            padding: 25px;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 16px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .admin-panel h2 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .admin-panel input[type="text"], 
+        .admin-panel input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 12px;
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .admin-panel input[type="text"]:focus {
+            outline: none;
+            border-color: var(--ios-blue);
+            background: #fff;
+        }
+
+        .admin-panel button {
+            width: 100%;
+            margin-bottom: 5px;
+        }
+
+        .btn-update { background-color: var(--ios-green); box-shadow: 0 4px 12px rgba(52, 199, 89, 0.3); }
+        .btn-update:hover { box-shadow: 0 6px 16px rgba(52, 199, 89, 0.4); }
+
+        hr {
+            border: 0;
+            border-top: 1px solid rgba(0,0,0,0.05);
+            margin: 20px 0;
+        }
+
+        #update-status {
+            font-size: 13px;
+            margin-top: 15px;
+            font-weight: 500;
+            min-height: 20px;
+        }
+        .success { color: var(--ios-green); }
+
+        /* Animasi Loading modern */
+        .loader {
+            border: 3px solid rgba(0,0,0,0.05);
+            border-top: 3px solid var(--ios-blue);
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s cubic-bezier(0.55, 0.15, 0.45, 0.85) infinite;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Animasi Transisi Halus */
+        @keyframes fadeSlideUp {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-pop {
+            animation: fadeSlideUp 0.5s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+            opacity: 0; /* Mulai dari tak terlihat */
+        }
+
+        /* Styling Media */
+        img, video {
+            max-width: 100%;
+            border-radius: 14px;
+            margin-top: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border: 1px solid var(--glass-border);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="glass-container">
+        <h1>Pesan Semangat</h1>
+        
+        <div class="action-group">
+            <button id="fetch-btn">Minta Pesan</button>
+            <button id="fetch-img-btn" class="btn-img">Gambar</button>
+            <button id="fetch-vid-btn" class="btn-vid">Video</button>
+        </div>
+
+        <div id="result-area">
+            <p style="color: var(--text-secondary); margin: 0;">Tekan tombol di atas untuk memulai keajaiban.</p>
+        </div>
+        
+        <img id="result-img" src="" alt="Gambar dari Server" style="display: none;">
+        <video id="result-vid" controls style="display: none;"></video>
+
+        <!-- Panel Admin -->
+        <div class="admin-panel">
+            <h2>Pusat Kendali</h2>
+            <input type="text" id="input-pesan" placeholder="Ketik pesan ajaib Anda...">
+            <button id="update-btn" class="btn-update">Update Pesan</button>
+            
+            <hr>
+            
+            <input type="file" id="input-gambar" accept="image/*">
+            <button id="upload-btn" class="btn-img" style="margin-bottom: 10px;">Upload Gambar Baru</button>
+            
+            <hr>
+            
+            <input type="file" id="input-video" accept="video/mp4,video/webm,video/ogg">
+            <button id="upload-vid-btn" class="btn-vid">Upload Video (HLS)</button>
+            
+            <div id="update-status"></div>
+        </div>
+    </div>
+
+    <!-- Library HLS.js -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script>
+        // Logika persis seperti index.html, hanya disesuaikan keindahan UI-nya
+        
+        const btn = document.getElementById('fetch-btn');
+        const resultArea = document.getElementById('result-area');
+
+        btn.addEventListener('click', () => {
+            fetch('http://localhost:3000/api/pesan')
+                .then(response => {
+                    if (!response.ok) throw new Error('Gagal mengambil data');
+                    return response.json();
+                })
+                .then(data => {
+                    resultArea.innerHTML = `
+                        <div class="pesan animate-pop">"${data.pesan}"</div>
+                        <div class="waktu animate-pop" style="animation-delay: 0.1s">Update terakhir: ${data.waktu}</div>
+                    `;
+                })
+                .catch(error => {
+                    resultArea.innerHTML = `<p class="error">Gagal menghubungi server.</p>`;
+                });
+        });
+
+        // --- Logika Minta Gambar ---
+        const fetchImgBtn = document.getElementById('fetch-img-btn');
+        const resultImg = document.getElementById('result-img');
+
+        fetchImgBtn.addEventListener('click', () => {
+            fetch('http://localhost:3000/api/gambar')
+                .then(response => {
+                    if (!response.ok) throw new Error('Gambar belum tersedia');
+                    return response.json();
+                })
+                .then(data => {
+                    resultImg.src = data.url;
+                    resultImg.style.display = "block";
+                    resultImg.classList.remove('animate-pop');
+                    void resultImg.offsetWidth; // Memicu reflow browser agar animasi bisa diulang
+                    resultImg.classList.add('animate-pop');
+                })
+                .catch(error => {
+                    resultArea.innerHTML = `<p class="error">${error.message}</p>`;
+                    resultImg.style.display = "none";
+                });
+        });
+
+        // --- Logika Minta Video ---
+        const fetchVidBtn = document.getElementById('fetch-vid-btn');
+        const resultVid = document.getElementById('result-vid');
+
+        fetchVidBtn.addEventListener('click', () => {
+            fetch('http://localhost:3000/api/video')
+                .then(response => {
+                    if (!response.ok) throw new Error('Video belum siap');
+                    return response.json();
+                })
+                .then(data => {
+                    const videoSrc = data.url;
+                    resultVid.style.display = "block";
+                    resultVid.classList.remove('animate-pop');
+                    void resultVid.offsetWidth; // Memicu reflow browser
+                    resultVid.classList.add('animate-pop');
+
+                    if (Hls.isSupported() && videoSrc.endsWith('.m3u8')) {
+                        const hls = new Hls();
+                        hls.loadSource(videoSrc);
+                        hls.attachMedia(resultVid);
+                    } 
+                    else if (resultVid.canPlayType('application/vnd.apple.mpegurl')) {
+                        resultVid.src = videoSrc;
+                    } 
+                    else {
+                        resultVid.src = videoSrc;
+                    }
+                })
+                .catch(error => {
+                    resultArea.innerHTML = `<p class="error">${error.message}</p>`;
+                    resultVid.style.display = "none";
+                });
+        });
+
+        // --- Logika Panel Admin ---
+        const updateStatus = document.getElementById('update-status');
+
+        // Teks Pesan
+        document.getElementById('update-btn').addEventListener('click', (e) => {
+            const btnObj = e.target;
+            const inputPesan = document.getElementById('input-pesan');
+            const pesanBaru = inputPesan.value.trim();
+            
+            if (!pesanBaru) return;
+
+            btnObj.disabled = true;
+            updateStatus.innerHTML = '<div class="loader"></div><span style="vertical-align: middle;">Menyimpan...</span>';
+
+            fetch('http://localhost:3000/api/pesan', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pesan: pesanBaru })
+            })
+            .then(res => res.json())
+            .then(data => {
+                updateStatus.innerHTML = `<span class="success">${data.message}</span>`;
+                inputPesan.value = "";
+            })
+            .finally(() => btnObj.disabled = false);
+        });
+
+        // Upload Gambar
+        document.getElementById('upload-btn').addEventListener('click', (e) => {
+            const btnObj = e.target;
+            const inputGambar = document.getElementById('input-gambar');
+            const file = inputGambar.files[0];
+            
+            if (!file) return;
+
+            btnObj.disabled = true;
+            updateStatus.innerHTML = '<div class="loader"></div><span style="vertical-align: middle;">Mengirim foto...</span>';
+
+            const formData = new FormData();
+            formData.append('gambar', file);
+
+            fetch('http://localhost:3000/api/upload', { method: 'POST', body: formData })
+            .then(res => res.json())
+            .then(data => {
+                updateStatus.innerHTML = `<span class="success">${data.message}</span>`;
+                inputGambar.value = "";
+            })
+            .finally(() => btnObj.disabled = false);
+        });
+
+        // Upload Video (Polling Background Jobs)
+        document.getElementById('upload-vid-btn').addEventListener('click', (e) => {
+            const btnObj = e.target;
+            const inputVideo = document.getElementById('input-video');
+            const file = inputVideo.files[0];
+            
+            if (!file) return;
+
+            btnObj.disabled = true;
+            btnObj.innerText = "Mengupload...";
+            updateStatus.innerHTML = '<div class="loader"></div><span style="vertical-align: middle;">Mengirim video besar...</span>';
+
+            const formData = new FormData();
+            formData.append('video', file);
+
+            fetch('http://localhost:3000/api/upload-video', { method: 'POST', body: formData })
+            .then(response => {
+                if (!response.ok && response.status !== 202) throw new Error('Gagal');
+                return response.json();
+            })
+            .then(data => {
+                updateStatus.innerHTML = `<div class="loader"></div><span style="vertical-align: middle; color: var(--ios-green);">${data.message}</span>`;
+                inputVideo.value = ""; 
+                
+                let checkCount = 0;
+                btnObj.innerText = "FFmpeg Berjalan...";
+                
+                const pollInterval = setInterval(() => {
+                    checkCount++;
+                    updateStatus.innerHTML = `<div class="loader"></div><span style="vertical-align: middle; color: var(--ios-green);">Merakit video... (Cek ke-${checkCount})</span>`;
+                    
+                    fetch('http://localhost:3000/api/video-status')
+                        .then(res => res.json())
+                        .then(statusData => {
+                            if (statusData.status === 'ready') {
+                                clearInterval(pollInterval);
+                                updateStatus.innerHTML = `<span class="success">Selesai! Video siap ditonton.</span>`;
+                                btnObj.disabled = false;
+                                btnObj.innerText = "Upload Video (HLS)";
+                            } else if (statusData.status === 'error') {
+                                clearInterval(pollInterval);
+                                updateStatus.innerHTML = `<span class="error">Gagal mengkonversi video.</span>`;
+                                btnObj.disabled = false;
+                                btnObj.innerText = "Upload Video (HLS)";
+                            }
+                        });
+                }, 2000);
+            })
+            .catch(error => {
+                updateStatus.innerHTML = '<span class="error">Gagal menghubungi server.</span>';
+                btnObj.disabled = false;
+                btnObj.innerText = "Upload Video (HLS)";
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+# Node modules
+node_modules/
+server/node_modules/
+
+# Mac OS
+.DS_Store
+
+# Uploaded files (ignore contents but keep the folder)
+server/uploads/*
+!server/uploads/.gitkeep
