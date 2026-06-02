@@ -287,7 +287,7 @@
         const resultArea = document.getElementById('result-area');
 
         btn.addEventListener('click', () => {
-            fetch('http://localhost:3000/api/pesan')
+            fetch('https://api1.rizaldy.web.id/api/pesan')
                 .then(response => {
                     if (!response.ok) throw new Error('Gagal mengambil data');
                     return response.json();
@@ -308,7 +308,7 @@
         const resultImg = document.getElementById('result-img');
 
         fetchImgBtn.addEventListener('click', () => {
-            fetch('http://localhost:3000/api/gambar')
+            fetch('https://api1.rizaldy.web.id/api/gambar')
                 .then(response => {
                     if (!response.ok) throw new Error('Gambar belum tersedia');
                     return response.json();
@@ -331,7 +331,7 @@
         const resultVid = document.getElementById('result-vid');
 
         fetchVidBtn.addEventListener('click', () => {
-            fetch('http://localhost:3000/api/video')
+            fetch('https://api1.rizaldy.web.id/api/video')
                 .then(response => {
                     if (!response.ok) throw new Error('Video belum siap');
                     return response.json();
@@ -375,7 +375,7 @@
             btnObj.disabled = true;
             updateStatus.innerHTML = '<div class="loader"></div><span style="vertical-align: middle;">Menyimpan...</span>';
 
-            fetch('http://localhost:3000/api/pesan', {
+            fetch('https://api1.rizaldy.web.id/api/pesan', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ pesan: pesanBaru })
@@ -402,7 +402,7 @@
             const formData = new FormData();
             formData.append('gambar', file);
 
-            fetch('http://localhost:3000/api/upload', { method: 'POST', body: formData })
+            fetch('https://api1.rizaldy.web.id/api/upload', { method: 'POST', body: formData })
             .then(res => res.json())
             .then(data => {
                 updateStatus.innerHTML = `<span class="success">${data.message}</span>`;
@@ -426,7 +426,7 @@
             const formData = new FormData();
             formData.append('video', file);
 
-            fetch('http://localhost:3000/api/upload-video', { method: 'POST', body: formData })
+            fetch('https://api1.rizaldy.web.id/api/upload-video', { method: 'POST', body: formData })
             .then(response => {
                 if (!response.ok && response.status !== 202) throw new Error('Gagal');
                 return response.json();
@@ -442,7 +442,7 @@
                     checkCount++;
                     updateStatus.innerHTML = `<div class="loader"></div><span style="vertical-align: middle; color: var(--ios-green);">Merakit video... (Cek ke-${checkCount})</span>`;
                     
-                    fetch('http://localhost:3000/api/video-status')
+                    fetch('https://api1.rizaldy.web.id/api/video-status')
                         .then(res => res.json())
                         .then(statusData => {
                             if (statusData.status === 'ready') {
