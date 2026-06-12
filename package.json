@@ -1,6 +1,6 @@
 {
   "name": "belajar-api",
-  "version": "1.1.06",
+  "version": "1.1.07",
   "description": "Proyek API dengan fitur Upload, FFmpeg HLS, dan UI Modern",
   "main": "server/server.js",
   "scripts": {
@@ -13,7 +13,8 @@
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "multer": "^2.1.1"
+    "multer": "^2.1.1",
+    "mysql2": "^3.22.5"
   },
   "keywords": [],
   "author": "Galih Rizaldy",
