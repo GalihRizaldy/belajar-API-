@@ -47,10 +47,10 @@ const upload = multer({
 // Membuka folder uploads agar bisa diakses secara publik oleh client
 app.use('/uploads', express.static('uploads'));
 
-// Variabel memori sementara untuk menyimpan pesan, URL gambar, dan URL video
-let pesanSemangat = "Halo! Tetap semangat belajar coding. Kamu pasti bisa!";
-let urlGambar = null; // Awalnya belum ada gambar
-let urlVideo = null; // Awalnya belum ada video
+// Variabel memori sementara untuk menyimpan pesan, URL gambar, dan URL video (berupa Array History)
+let historyPesan = [{ pesan: "Halo! Tetap semangat belajar coding. Kamu pasti bisa!", waktu: new Date().toString() }];
+let historyGambar = [];
+let historyVideo = [];
 let statusVideo = 'none'; // 'none', 'processing', 'ready', 'error'
 
 // Middleware untuk melakukan log setiap kali ada request yang masuk
@@ -74,14 +74,8 @@ const getBaseUrl = (req) => {
 
 // Membuat endpoint GET /api/pesan
 app.get('/api/pesan', (req, res) => {
-    // Menyiapkan response JSON
-    const responseData = {
-        pesan: pesanSemangat, // Mengambil dari variabel memori
-        waktu: new Date().toString()
-    };
-    
-    // Mengirim response dengan status HTTP 200
-    res.status(200).json(responseData);
+    // Mengirim response seluruh history
+    res.status(200).json({ history: historyPesan });
 });
 
 // Membuat endpoint POST /api/pesan untuk mengupdate pesan
@@ -90,20 +84,16 @@ app.post('/api/pesan', (req, res) => {
     const { pesan } = req.body;
     
     if (pesan) {
-        pesanSemangat = pesan; // Menimpa pesan lama dengan yang baru
-        res.status(200).json({ status: "sukses", message: "Pesan berhasil diupdate!" });
+        historyPesan.push({ pesan: pesan, waktu: new Date().toString() }); // Menambah pesan ke dalam array
+        res.status(200).json({ status: "sukses", message: "Pesan berhasil ditambahkan ke riwayat!" });
     } else {
         res.status(400).json({ status: "gagal", message: "Pesan tidak boleh kosong." });
     }
 });
 
-// Endpoint untuk mendapatkan URL gambar saat ini
+// Endpoint untuk mendapatkan riwayat gambar
 app.get('/api/gambar', (req, res) => {
-    if (urlGambar) {
-        res.status(200).json({ url: urlGambar });
-    } else {
-        res.status(404).json({ message: "Belum ada gambar yang diupload." });
-    }
+    res.status(200).json({ history: historyGambar });
 });
 
 // Endpoint untuk mengupload gambar baru ke Cloudinary
@@ -121,10 +111,10 @@ app.post('/api/upload', upload.single('gambar'), async (req, res) => {
         // Hapus file sementara di lokal setelah berhasil di-upload
         fs.unlinkSync(req.file.path);
         
-        // Simpan URL aman (HTTPS) dari Cloudinary
-        urlGambar = result.secure_url;
+        // Simpan ke dalam array riwayat
+        historyGambar.push({ url: result.secure_url, waktu: new Date().toString() });
         
-        res.status(200).json({ status: "sukses", message: "Gambar berhasil diupload ke Cloudinary!", url: urlGambar });
+        res.status(200).json({ status: "sukses", message: "Gambar berhasil ditambahkan ke riwayat Cloudinary!" });
     } catch (error) {
         console.error("Error upload ke Cloudinary:", error);
         
@@ -137,13 +127,9 @@ app.post('/api/upload', upload.single('gambar'), async (req, res) => {
     }
 });
 
-// Endpoint untuk mendapatkan URL video saat ini
+// Endpoint untuk mendapatkan riwayat video
 app.get('/api/video', (req, res) => {
-    if (urlVideo && statusVideo === 'ready') {
-        res.status(200).json({ url: urlVideo });
-    } else {
-        res.status(404).json({ message: "Belum ada video yang siap diputar." });
-    }
+    res.status(200).json({ history: historyVideo });
 });
 
 // Endpoint untuk mengecek status konversi video
@@ -159,7 +145,6 @@ app.post('/api/upload-video', upload.single('video'), (req, res) => {
     
     // Ubah status menjadi processing
     statusVideo = 'processing';
-    urlVideo = null;
     
     // MENGIRIM RESPON SEGERA (Status 202 Accepted) agar frontend bisa polling
     res.status(202).json({ 
@@ -180,13 +165,15 @@ app.post('/api/upload-video', upload.single('video'), (req, res) => {
         
         // Kita menggunakan cloudinary.url() untuk merakit URL HLS (.m3u8) secara pasti
         // meskipun proses transformasinya masih berjalan di latar belakang Cloudinary.
-        urlVideo = cloudinary.url(result.public_id, { 
+        const generatedUrl = cloudinary.url(result.public_id, { 
             resource_type: "video", 
             format: "m3u8", 
             streaming_profile: "hd", 
             secure: true 
         });
         
+        // Push ke dalam array history
+        historyVideo.push({ url: generatedUrl, waktu: new Date().toString() });
         statusVideo = 'ready';
         
         // Hapus file mentah lokal

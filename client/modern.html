@@ -306,9 +306,14 @@
                     return response.json();
                 })
                 .then(data => {
+                    if (!data.history || data.history.length === 0) {
+                        resultArea.innerHTML = `<p class="error">Belum ada riwayat pesan.</p>`;
+                        return;
+                    }
+                    const latest = data.history[data.history.length - 1];
                     resultArea.innerHTML = `
-                        <div class="pesan animate-pop">"${data.pesan}"</div>
-                        <div class="waktu animate-pop" style="animation-delay: 0.1s">Update terakhir: ${data.waktu}</div>
+                        <div class="pesan animate-pop">"${latest.pesan}"</div>
+                        <div class="waktu animate-pop" style="animation-delay: 0.1s">Update terakhir: ${latest.waktu}</div>
                     `;
                 })
                 .catch(error => {
@@ -323,11 +328,15 @@
         fetchImgBtn.addEventListener('click', () => {
             fetch('https://api1.rizaldy.web.id/api/gambar')
                 .then(response => {
-                    if (!response.ok) throw new Error('Gambar belum tersedia');
+                    if (!response.ok) throw new Error('Gagal mengambil data gambar');
                     return response.json();
                 })
                 .then(data => {
-                    resultImg.src = data.url;
+                    if (!data.history || data.history.length === 0) {
+                        throw new Error('Belum ada gambar dalam riwayat.');
+                    }
+                    const latest = data.history[data.history.length - 1];
+                    resultImg.src = latest.url;
                     resultImg.style.display = "block";
                     resultImg.classList.remove('animate-pop');
                     void resultImg.offsetWidth; // Memicu reflow browser agar animasi bisa diulang
@@ -346,11 +355,15 @@
         fetchVidBtn.addEventListener('click', () => {
             fetch('https://api1.rizaldy.web.id/api/video')
                 .then(response => {
-                    if (!response.ok) throw new Error('Video belum siap');
+                    if (!response.ok) throw new Error('Gagal mengambil data video');
                     return response.json();
                 })
                 .then(data => {
-                    const videoSrc = data.url;
+                    if (!data.history || data.history.length === 0) {
+                        throw new Error('Belum ada video dalam riwayat.');
+                    }
+                    const latest = data.history[data.history.length - 1];
+                    const videoSrc = latest.url;
                     resultVid.style.display = "block";
                     resultVid.classList.remove('animate-pop');
                     void resultVid.offsetWidth; // Memicu reflow browser
