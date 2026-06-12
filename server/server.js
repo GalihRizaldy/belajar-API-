@@ -1,6 +1,17 @@
+// Load environment variables dari file .env (direkomendasikan diletakkan di root atau sesuaikan path-nya)
+require('dotenv').config();
+
 // Mengimpor module express dan cors
 const express = require('express');
 const cors = require('cors');
+const cloudinary = require('cloudinary').v2;
+
+// Konfigurasi Cloudinary menggunakan environment variables
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+});
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -97,16 +108,35 @@ app.get('/api/gambar', (req, res) => {
     }
 });
 
-// Endpoint untuk mengupload gambar baru
-app.post('/api/upload', upload.single('gambar'), (req, res) => {
+// Endpoint untuk mengupload gambar baru ke Cloudinary
+app.post('/api/upload', upload.single('gambar'), async (req, res) => {
     if (!req.file) {
         return res.status(400).json({ status: "gagal", message: "Tidak ada file yang diupload." });
     }
     
-    // Menyimpan path gambar yang bisa diakses client dengan URL dinamis (menyesuaikan domain)
-    urlGambar = `${getBaseUrl(req)}/uploads/${req.file.filename}`;
-    
-    res.status(200).json({ status: "sukses", message: "Gambar berhasil diupload!", url: urlGambar });
+    try {
+        // Upload gambar dari penyimpanan lokal sementara ke Cloudinary
+        const result = await cloudinary.uploader.upload(req.file.path, {
+            folder: 'belajar-api/gambar'
+        });
+        
+        // Hapus file sementara di lokal setelah berhasil di-upload
+        fs.unlinkSync(req.file.path);
+        
+        // Simpan URL aman (HTTPS) dari Cloudinary
+        urlGambar = result.secure_url;
+        
+        res.status(200).json({ status: "sukses", message: "Gambar berhasil diupload ke Cloudinary!", url: urlGambar });
+    } catch (error) {
+        console.error("Error upload ke Cloudinary:", error);
+        
+        // Pastikan file lokal terhapus meskipun proses upload gagal
+        if (fs.existsSync(req.file.path)) {
+            fs.unlinkSync(req.file.path);
+        }
+        
+        res.status(500).json({ status: "gagal", message: "Gagal mengupload gambar ke Cloudinary." });
+    }
 });
 
 // Endpoint untuk mendapatkan URL video saat ini
