@@ -50,6 +50,19 @@ app.use((req, res, next) => {
     next();
 });
 
+// Fungsi pembantu untuk mendapatkan Base URL yang anti-gagal (mengatasi isu Nginx aaPanel)
+const getBaseUrl = (req) => {
+    const host = req.get('x-forwarded-host') || req.get('host');
+    const protocol = req.get('x-forwarded-proto') || req.protocol;
+    
+    // Jika Nginx VPS tidak mengirim header Host, ia akan terbaca sebagai localhost.
+    // Kita paksa menggunakan domain production Anda.
+    if (host.includes('localhost') || host.includes('127.0.0.1')) {
+        return 'https://api1.rizaldy.web.id';
+    }
+    return `${protocol}://${host}`;
+};
+
 // Membuat endpoint GET /api/pesan
 app.get('/api/pesan', (req, res) => {
     // Menyiapkan response JSON
@@ -91,7 +104,7 @@ app.post('/api/upload', upload.single('gambar'), (req, res) => {
     }
     
     // Menyimpan path gambar yang bisa diakses client dengan URL dinamis (menyesuaikan domain)
-    urlGambar = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+    urlGambar = `${getBaseUrl(req)}/uploads/${req.file.filename}`;
     
     res.status(200).json({ status: "sukses", message: "Gambar berhasil diupload!", url: urlGambar });
 });
@@ -151,7 +164,7 @@ app.post('/api/upload-video', upload.single('video'), (req, res) => {
             fs.unlinkSync(inputPath);
             
             // Menyimpan path playlist HLS yang baru dengan URL dinamis (menyesuaikan domain)
-            urlVideo = `${req.protocol}://${req.get('host')}/${outputPath}`;
+            urlVideo = `${getBaseUrl(req)}/${outputPath}`;
             statusVideo = 'ready';
         })
         .on('error', (err) => {
