@@ -278,11 +278,24 @@
         </div>
     </div>
 
+    <!-- UI Versi Aplikasi -->
+    <div id="app-version" style="position: fixed; bottom: 15px; right: 20px; background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(10px); padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 600; color: var(--text-secondary); box-shadow: var(--glass-shadow); border: 1px solid var(--glass-border); z-index: 1000; cursor: default; transition: all 0.3s ease;">
+        v...
+    </div>
+
     <!-- Library HLS.js -->
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <script>
         // Logika persis seperti index.html, hanya disesuaikan keindahan UI-nya
         
+        // --- Fetch App Version ---
+        fetch('https://api1.rizaldy.web.id/api/version')
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('app-version').innerText = `v${data.version}`;
+            })
+            .catch(err => console.error('Gagal mengambil versi', err));
+
         const btn = document.getElementById('fetch-btn');
         const resultArea = document.getElementById('result-area');
 

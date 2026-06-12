@@ -1,11 +1,12 @@
 {
   "name": "belajar-api",
-  "version": "1.0.0",
+  "version": "1.1.01",
   "description": "Proyek API dengan fitur Upload, FFmpeg HLS, dan UI Modern",
   "main": "server/server.js",
   "scripts": {
     "start": "node server/server.js",
-    "dev": "node server/server.js"
+    "dev": "node server/server.js",
+    "push": "node push.js"
   },
   "dependencies": {
     "@ffmpeg-installer/ffmpeg": "^1.1.0",

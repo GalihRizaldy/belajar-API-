@@ -204,6 +204,17 @@ app.post('/api/upload-video', upload.single('video'), (req, res) => {
         .run();
 });
 
+// Endpoint untuk mendapatkan versi aplikasi
+app.get('/api/version', (req, res) => {
+    try {
+        const pkgPath = path.join(__dirname, '../package.json');
+        const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+        res.status(200).json({ version: pkg.version });
+    } catch (e) {
+        res.status(200).json({ version: '1.1.01' }); // Fallback
+    }
+});
+
 // Menjalankan server pada port yang ditentukan
 app.listen(PORT, () => {
     console.log(`Server sedang berjalan di http://localhost:${PORT}`);
