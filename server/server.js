@@ -176,14 +176,17 @@ app.post('/api/upload-video', upload.single('video'), (req, res) => {
         ],
         eager_async: true
     }).then(result => {
-        console.log('Upload dan konversi video Cloudinary selesai!');
-        // Mengambil URL HLS dari eager transformation jika tersedia
-        if (result.eager && result.eager.length > 0) {
-            urlVideo = result.eager[0].secure_url;
-        } else {
-            // Fallback (jarang terjadi jika eager berhasil)
-            urlVideo = result.secure_url;
-        }
+        console.log('Upload video Cloudinary selesai! HLS sedang di-generate di latar belakang Cloudinary.');
+        
+        // Kita menggunakan cloudinary.url() untuk merakit URL HLS (.m3u8) secara pasti
+        // meskipun proses transformasinya masih berjalan di latar belakang Cloudinary.
+        urlVideo = cloudinary.url(result.public_id, { 
+            resource_type: "video", 
+            format: "m3u8", 
+            streaming_profile: "hd", 
+            secure: true 
+        });
+        
         statusVideo = 'ready';
         
         // Hapus file mentah lokal
