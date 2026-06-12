@@ -14,6 +14,9 @@ ffmpeg.setFfmpegPath(ffmpegPath);
 const app = express();
 const PORT = 3000;
 
+// Agar Express mendeteksi protokol HTTPS jika berada di belakang Reverse Proxy (seperti Nginx/Vercel)
+app.set('trust proxy', true);
+
 // Menggunakan middleware cors agar client (origin lain) bisa mengakses API
 app.use(cors());
 
@@ -87,8 +90,8 @@ app.post('/api/upload', upload.single('gambar'), (req, res) => {
         return res.status(400).json({ status: "gagal", message: "Tidak ada file yang diupload." });
     }
     
-    // Menyimpan path gambar yang bisa diakses client
-    urlGambar = `http://localhost:3000/uploads/${req.file.filename}`;
+    // Menyimpan path gambar yang bisa diakses client dengan URL dinamis (menyesuaikan domain)
+    urlGambar = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
     
     res.status(200).json({ status: "sukses", message: "Gambar berhasil diupload!", url: urlGambar });
 });
@@ -147,8 +150,8 @@ app.post('/api/upload-video', upload.single('video'), (req, res) => {
             console.log('Konversi HLS selesai di latar belakang!');
             fs.unlinkSync(inputPath);
             
-            // Menyimpan path playlist HLS yang baru dan ubah status
-            urlVideo = `http://localhost:3000/${outputPath}`;
+            // Menyimpan path playlist HLS yang baru dengan URL dinamis (menyesuaikan domain)
+            urlVideo = `${req.protocol}://${req.get('host')}/${outputPath}`;
             statusVideo = 'ready';
         })
         .on('error', (err) => {
