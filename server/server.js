@@ -15,11 +15,6 @@ cloudinary.config({
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const ffmpeg = require('fluent-ffmpeg');
-const ffmpegPath = require('ffmpeg-static');
-
-// Mengatur path FFmpeg dari paket ffmpeg-static
-ffmpeg.setFfmpegPath(ffmpegPath);
 
 // Inisialisasi aplikasi Express
 const app = express();
@@ -34,7 +29,7 @@ app.use(cors());
 // Middleware untuk mem-parsing body berformat JSON
 app.use(express.json());
 
-// Konfigurasi Multer untuk menyimpan file ke folder uploads
+// Konfigurasi Multer untuk menyimpan file ke folder uploads (Maksimal 50 MB)
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, 'uploads/'); // Folder tujuan
@@ -44,7 +39,10 @@ const storage = multer.diskStorage({
         cb(null, Date.now() + path.extname(file.originalname));
     }
 });
-const upload = multer({ storage: storage });
+const upload = multer({ 
+    storage: storage,
+    limits: { fileSize: 50 * 1024 * 1024 } // Batas ukuran 50 MB
+});
 
 // Membuka folder uploads agar bisa diakses secara publik oleh client
 app.use('/uploads', express.static('uploads'));
@@ -153,7 +151,7 @@ app.get('/api/video-status', (req, res) => {
     res.status(200).json({ status: statusVideo });
 });
 
-// Endpoint untuk mengupload video baru (dan mengkonversi ke HLS secara Asinkron)
+// Endpoint untuk mengupload video baru (dan mengkonversi ke HLS di Cloudinary secara Asinkron)
 app.post('/api/upload-video', upload.single('video'), (req, res) => {
     if (!req.file) {
         return res.status(400).json({ status: "gagal", message: "Tidak ada file video yang diupload." });
@@ -163,45 +161,44 @@ app.post('/api/upload-video', upload.single('video'), (req, res) => {
     statusVideo = 'processing';
     urlVideo = null;
     
-    // MENGIRIM RESPON SEGERA (Status 202 Accepted) sebelum FFmpeg selesai
+    // MENGIRIM RESPON SEGERA (Status 202 Accepted) agar frontend bisa polling
     res.status(202).json({ 
         status: "processing", 
-        message: "Video berhasil diupload dan sedang dikonversi di latar belakang." 
+        message: "Video berhasil diupload dan sedang dikonversi di Cloudinary (latar belakang)." 
     });
     
-    const inputPath = req.file.path;
-    const filenameWithoutExt = path.basename(req.file.filename, path.extname(req.file.filename));
-    const hlsFolder = `uploads/hls/${filenameWithoutExt}`;
-    if (!fs.existsSync(hlsFolder)){
-        fs.mkdirSync(hlsFolder, { recursive: true });
-    }
-
-    const outputPath = `${hlsFolder}/index.m3u8`;
-
-    // Mulai proses konversi menggunakan FFmpeg (Berjalan di latar belakang)
-    ffmpeg(inputPath)
-        .outputOptions([
-            '-profile:v baseline', 
-            '-level 3.0',
-            '-start_number 0',
-            '-hls_time 5',         
-            '-hls_list_size 0',    
-            '-f hls'               
-        ])
-        .output(outputPath)
-        .on('end', () => {
-            console.log('Konversi HLS selesai di latar belakang!');
-            fs.unlinkSync(inputPath);
-            
-            // Menyimpan path playlist HLS yang baru dengan URL dinamis (menyesuaikan domain)
-            urlVideo = `${getBaseUrl(req)}/${outputPath}`;
-            statusVideo = 'ready';
-        })
-        .on('error', (err) => {
-            console.error('Error saat konversi FFmpeg:', err);
-            statusVideo = 'error';
-        })
-        .run();
+    // Proses asinkron upload ke Cloudinary
+    cloudinary.uploader.upload(req.file.path, {
+        resource_type: "video",
+        folder: "belajar-api/video",
+        eager: [
+            { streaming_profile: "hd", format: "m3u8" }
+        ],
+        eager_async: true
+    }).then(result => {
+        console.log('Upload dan konversi video Cloudinary selesai!');
+        // Mengambil URL HLS dari eager transformation jika tersedia
+        if (result.eager && result.eager.length > 0) {
+            urlVideo = result.eager[0].secure_url;
+        } else {
+            // Fallback (jarang terjadi jika eager berhasil)
+            urlVideo = result.secure_url;
+        }
+        statusVideo = 'ready';
+        
+        // Hapus file mentah lokal
+        if (fs.existsSync(req.file.path)) {
+            fs.unlinkSync(req.file.path);
+        }
+    }).catch(error => {
+        console.error("Error upload video ke Cloudinary:", error);
+        statusVideo = 'error';
+        
+        // Hapus file mentah lokal jika gagal
+        if (fs.existsSync(req.file.path)) {
+            fs.unlinkSync(req.file.path);
+        }
+    });
 });
 
 // Endpoint untuk mendapatkan versi aplikasi
